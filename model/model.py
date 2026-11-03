@@ -15,7 +15,7 @@ class HParams:
     epochs: int = 500
     patience: int = 50
     min_epochs: int = 20
-    ema: float = 0.9            # smoothing of the validation loss used for early stopping
+    ema: float = 0.9             
     lr: float = 1e-3
     weight_decay: float = 1e-3
     enc_lr_mult: float = 0.1    # learning-rate multiplier for the pretrained RNA encoder
