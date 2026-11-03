@@ -1,12 +1,3 @@
-"""
-etime.py -- eTime feature groups and preprocessing used by EvoSurv.
-
-  GROUPS        the 38 eTime features in eight groups (columns of all_features.csv)
-  to_props      converts log(1 + count) features to within-compartment proportions
-  Preprocessor  fitted on the training set: median imputation, removal of near-constant
-                features, standardization
-"""
-
 import numpy as np
 
 SUB6 = ["C>A", "C>G", "C>T", "T>A", "T>C", "T>G"]
@@ -26,13 +17,7 @@ GROUPS = {
 
 
 def to_props(X):
-    """
-    Convert log(1 + count) features to proportions within each compartment:
-      substitution classes  / total SNVs of the compartment
-      functional classes    / total of the four classes
-      deleterious count     / total SNVs of the compartment
-    Proportions are NaN for an empty compartment (imputed later by Preprocessor).
-    """
+
     X = X.copy()
     cnt = lambda cols: np.expm1(X[cols])
     for per in ("clonal", "subclonal"):
@@ -49,7 +34,6 @@ def to_props(X):
 
 
 class Preprocessor:
-    """Fitted on training data: median imputation, removal of near-constant features, standardization."""
 
     def __init__(self, groups, const_frac=0.99):
         self.groups, self.const_frac = groups, const_frac
