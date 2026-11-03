@@ -1,5 +1,3 @@
-"""RNA branch: preprocessing, autoencoder, Cox utilities and data splits."""
-
 import numpy as np
 import pandas as pd
 import torch
@@ -15,7 +13,6 @@ def set_seed(seed):
 
 
 def concordance_index(time, event, risk):
-    """Harrell's C-index; a higher risk means earlier death."""
     t = np.asarray(time, dtype=float)
     e = np.asarray(event).astype(bool)
     r = np.asarray(risk, dtype=float)
@@ -27,7 +24,6 @@ def concordance_index(time, event, risk):
 
 
 def cox_ph_loss(risk, time, event):
-    """Negative Cox partial log-likelihood (Breslow ties), averaged over events."""
     event = event.float()
     if event.sum() == 0:
         return risk.sum() * 0.0
@@ -40,11 +36,7 @@ def cox_ph_loss(risk, time, event):
 
 
 class RNAPreprocessor:
-    """Fit on training data only. Input is log2(TPM + 1).
 
-    Keeps genes with TPM > min_tpm in at least min_frac of patients, selects the
-    top_k genes by median absolute deviation, then z-scores and clips each gene.
-    """
 
     def __init__(self, min_tpm=1.0, min_frac=0.2, top_k=2000, clip=5.0):
         self.min_tpm, self.min_frac, self.top_k, self.clip = min_tpm, min_frac, top_k, clip
@@ -105,7 +97,6 @@ def _to_t(a, device):
 
 def train_rna_ae(X_tr, X_va, latent_dim=64, dropout=0.3, lr=1e-3, weight_decay=1e-4,
                  epochs=300, batch_size=1024, patience=30, seed=0, device=None):
-    """Pretrain the autoencoder with reconstruction loss only; early stop on validation loss."""
     set_seed(seed)
     device = device or ("cuda" if torch.cuda.is_available() else "cpu")
     Xtr, Xva = _to_t(X_tr, device), _to_t(X_va, device)
@@ -152,7 +143,6 @@ def encode_numpy(model, X):
 
 
 def fit_linear_cox(Z_tr, t_tr, e_tr, l2=1e-2, steps=500, lr=1e-2):
-    """L2-penalized linear Cox model on training-standardized inputs."""
     mu, sd = Z_tr.mean(0), Z_tr.std(0) + 1e-6
     Z = torch.tensor((Z_tr - mu) / sd, dtype=torch.float32)
     t = torch.tensor(t_tr, dtype=torch.float32)
@@ -172,10 +162,7 @@ L2_GRID = (1e-3, 1e-2, 1e-1, 1.0, 10.0)
 
 
 def fit_linear_cox_val(Z_tr, t_tr, e_tr, Z_va, t_va, e_va, l2_grid=L2_GRID):
-    """Linear Cox model with the L2 penalty chosen by validation C-index.
 
-    Returns (predict, chosen l2, validation C-index).
-    """
     best = None
     for l2 in l2_grid:
         pred = fit_linear_cox(Z_tr, t_tr, e_tr, l2=l2)
@@ -203,7 +190,6 @@ def stratified_split(event, seed, test_frac=0.2, val_frac=0.2):
 
 def load_data(rna_path, surv_path, cohort_path="", id_col="patient_id",
               time_col="OS_time_days", event_col="OS_event"):
-    """Expression matrix and survival for patients with both, sorted by patient ID."""
     rna = pd.read_csv(rna_path)
     rid = rna.columns[0] if id_col not in rna.columns else id_col
     rna["_pid"] = rna[rid].astype(str).str[:12]
