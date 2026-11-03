@@ -21,7 +21,6 @@ def norm_pid(x):
 
 
 def load_etime(cancer, base_dir, features_dir, patient_ids):
-    """eTime features in the order of patient_ids; spectra and classes as proportions."""
     p = Path(base_dir) / features_dir / cancer / "all_features.csv"
     d = pd.read_csv(p)
     d["patient_id"] = d["patient_id"].map(norm_pid)
@@ -32,7 +31,6 @@ def load_etime(cancer, base_dir, features_dir, patient_ids):
 
 
 def stage_to_ord(x):
-    """TCGA stage string -> 1-4; stage 0, IS, X and missing -> NaN."""
     if pd.isna(x):
         return np.nan
     s = str(x).upper().strip()
@@ -51,7 +49,6 @@ def stage_to_ord(x):
 
 
 def load_clinical(cancer, cdr_file):
-    """Stage (pathologic, else clinical) and age at diagnosis from TCGA-CDR."""
     d = pd.read_excel(cdr_file)
     d = d[d["type"].astype(str).str.upper() == cancer].copy()
     d["patient_id"] = d["bcr_patient_barcode"].map(norm_pid)
@@ -86,7 +83,6 @@ def load_cohort(c, args):
 
 
 def clinical_design(stage, age, idx, ref):
-    """One-hot stage (reference level dropped) and training-standardized age."""
     tr = idx[0]
     S = np.column_stack([(stage == s).astype(float) for s in (1, 2, 3, 4) if s != ref])
     X = np.column_stack([S, (age - age[tr].mean()) / (age[tr].std() + 1e-8)])
@@ -95,7 +91,6 @@ def clinical_design(stage, age, idx, ref):
 
 
 def fit_offset_linear(X, eta, t, e, idx, steps=300, lr=1e-2):
-    """Risk = eta + X w with eta fixed; the L2 penalty is chosen by validation C-index."""
     tr, va, te = idx
     X = [np.asarray(x, np.float32) for x in X]
     mu, sd = X[0].mean(0), X[0].std(0) + 1e-8
